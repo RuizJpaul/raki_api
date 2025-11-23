@@ -23,12 +23,16 @@ app.get("/", (req, res) => res.json({ ok: true }));
 
 const PORT = process.env.PORT || 4000;
 
-app.listen(PORT, async () => {
-  try {
-    await sequelize.authenticate();
-    console.log("✅ Conectado a Neon PostgreSQL");
-    console.log(`🚀 Server running on port ${PORT}`);
-  } catch (err) {
-    console.error("❌ DB connection error:", err);
-  }
-});
+if (process.env.NODE_ENV !== 'test') {
+  app.listen(PORT, async () => {
+    try {
+      await sequelize.authenticate();
+      console.log("✅ Conectado a Neon PostgreSQL");
+      console.log(`🚀 Server running on port ${PORT}`);
+    } catch (err) {
+      console.error("❌ DB connection error:", err);
+    }
+  });
+}
+
+export default app;

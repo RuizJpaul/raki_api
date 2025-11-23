@@ -16,7 +16,14 @@ export const crearPostulacion = async (req, res) => {
     if (existe) return res.status(400).json({ mensaje: "Ya te postulaste a esta donación" });
 
     const postulacion = await Postulacion.create({ id_donacion, id_beneficiario: beneficiario.id_beneficiario, estado: "pendiente" });
-    return res.status(201).json(postulacion);
+    // Respuesta adaptada al Figma
+    return res.status(201).json({
+      id_postulacion: postulacion.id_postulacion,
+      id_donacion: postulacion.id_donacion,
+      id_beneficiario: postulacion.id_beneficiario,
+      fecha_postulacion: postulacion.fecha_postulacion,
+      estado: postulacion.estado
+    });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: error.message });
@@ -29,8 +36,21 @@ export const listarPostulacionesPorBeneficiario = async (req, res) => {
     const beneficiario = await Beneficiario.findOne({ where: { id_usuario } });
     if (!beneficiario) return res.status(403).json({ mensaje: "No autorizado" });
 
-    const postulaciones = await Postulacion.findAll({ where: { id_beneficiario: beneficiario.id_beneficiario }, include: [{ model: Donacion }], order: [["fecha_postulacion", "DESC"]] });
-    return res.json(postulaciones);
+    const postulaciones = await Postulacion.findAll({
+      where: { id_beneficiario: beneficiario.id_beneficiario },
+      include: [{ model: Donacion }],
+      order: [["fecha_postulacion", "DESC"]]
+    });
+    // Respuesta adaptada al Figma
+    const resultado = postulaciones.map(p => ({
+      id_postulacion: p.id_postulacion,
+      id_donacion: p.id_donacion,
+      id_beneficiario: p.id_beneficiario,
+      fecha_postulacion: p.fecha_postulacion,
+      estado: p.estado,
+      donacion: p.donacion
+    }));
+    return res.json(resultado);
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: error.message });
@@ -47,8 +67,19 @@ export const listarPostulacionesPorDonacion = async (req, res) => {
     const donacion = await Donacion.findByPk(id);
     if (!donacion || donacion.id_donador !== donador.id_donador) return res.status(404).json({ mensaje: "Donación no encontrada o no es tuya" });
 
-    const postulaciones = await Postulacion.findAll({ where: { id_donacion: id }, order: [["fecha_postulacion", "DESC"]] });
-    return res.json(postulaciones);
+    const postulaciones = await Postulacion.findAll({
+      where: { id_donacion: id },
+      order: [["fecha_postulacion", "DESC"]]
+    });
+    // Respuesta adaptada al Figma
+    const resultado = postulaciones.map(p => ({
+      id_postulacion: p.id_postulacion,
+      id_donacion: p.id_donacion,
+      id_beneficiario: p.id_beneficiario,
+      fecha_postulacion: p.fecha_postulacion,
+      estado: p.estado
+    }));
+    return res.json(resultado);
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: error.message });
@@ -76,7 +107,14 @@ export const actualizarEstadoPostulacion = async (req, res) => {
       await donacion.update({ estado: "entregada" });
     }
 
-    return res.json({ mensaje: "Estado actualizado", postulacion });
+    // Respuesta adaptada al Figma
+    return res.json({
+      id_postulacion: postulacion.id_postulacion,
+      id_donacion: postulacion.id_donacion,
+      id_beneficiario: postulacion.id_beneficiario,
+      fecha_postulacion: postulacion.fecha_postulacion,
+      estado: postulacion.estado
+    });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: error.message });
