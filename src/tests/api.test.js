@@ -20,7 +20,6 @@ describe('API Tests', () => {
         ruc: '12345678901',
         persona_contacto: 'Juan Test',
         telefono: '999888777',
-        ciudad: 'Lima'
       });
     expect(res.statusCode).toBe(201);
     expect(res.body.token).toBeDefined();
@@ -41,7 +40,6 @@ describe('API Tests', () => {
         capacidad_atencion: 10,
         persona_contacto: 'Maria Test',
         telefono: '988776655',
-        ciudad: 'Arequipa'
       });
     expect(res.statusCode).toBe(201);
     expect(res.body.token).toBeDefined();

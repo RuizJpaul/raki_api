@@ -13,7 +13,6 @@ export const Beneficiario = sequelize.define(
     capacidad_atencion: { type: DataTypes.INTEGER },
     persona_contacto: { type: DataTypes.STRING },
     telefono: { type: DataTypes.STRING },
-    ciudad: { type: DataTypes.STRING },
   },
   {
     freezeTableName: true,
