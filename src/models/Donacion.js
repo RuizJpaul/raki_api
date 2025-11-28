@@ -7,7 +7,7 @@ export const Donacion = sequelize.define(
   {
     id_donacion: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
     id_donador: { type: DataTypes.INTEGER },
-    id_categoria: { type: DataTypes.INTEGER },
+    categoria: { type: DataTypes.STRING },
     nombre: { type: DataTypes.STRING },
     descripcion: { type: DataTypes.TEXT },
     cantidad: { type: DataTypes.INTEGER },

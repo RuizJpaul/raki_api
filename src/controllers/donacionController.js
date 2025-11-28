@@ -9,12 +9,12 @@ export const crearDonacion = async (req, res) => {
     if (!donador) return res.status(403).json({ mensaje: "Solo donadores pueden crear donaciones" });
 
     // Adaptar los campos y respuesta al Figma
-    const { nombre, descripcion, cantidad, fecha_vencimiento, ubicacion, id_categoria } = req.body;
-    if (!nombre || !cantidad) return res.status(400).json({ error: "Faltan datos obligatorios" });
+    const { nombre, descripcion, cantidad, fecha_vencimiento, ubicacion, categoria } = req.body;
+    if (!nombre || !cantidad || !categoria) return res.status(400).json({ error: "Faltan datos obligatorios" });
 
     const nueva = await Donacion.create({
       id_donador: donador.id_donador,
-      id_categoria: id_categoria || null,
+      categoria,
       nombre,
       descripcion,
       cantidad,
@@ -32,7 +32,7 @@ export const crearDonacion = async (req, res) => {
       fecha_vencimiento: nueva.fecha_vencimiento,
       ubicacion: nueva.ubicacion,
       estado: nueva.estado,
-      id_categoria: nueva.id_categoria,
+      categoria: nueva.categoria,
       id_donador: nueva.id_donador
     });
   } catch (error) {
@@ -43,19 +43,17 @@ export const crearDonacion = async (req, res) => {
 
 export const listarDonaciones = async (req, res) => {
   try {
-    const { categoria, ciudad, q, estado } = req.query;
+    const { categoria, q, estado } = req.query;
     const where = {};
     if (estado) where.estado = estado;
-    if (categoria) where.id_categoria = categoria;
-    if (ciudad) where.ubicacion = { [Op.iLike]: `%${ciudad}%` };
+    if (categoria) where.categoria = { [Op.iLike]: `%${categoria}%` };
     if (q) where.nombre = { [Op.iLike]: `%${q}%` };
 
     // Adaptar la respuesta al Figma
     const donaciones = await Donacion.findAll({
       where,
       include: [
-        { model: Donador, attributes: ["id_donador", "nombre", "tipo_entidad", "direccion", "telefono", "ciudad"] },
-        { model: CategoriaDonacion, attributes: ["id_categoria", "nombre"] }
+        { model: Donador, attributes: ["id_donador", "nombre", "tipo_entidad", "direccion", "telefono"] }
       ],
       order: [["id_donacion", "DESC"]],
     });
@@ -69,10 +67,9 @@ export const listarDonaciones = async (req, res) => {
       fecha_vencimiento: d.fecha_vencimiento,
       ubicacion: d.ubicacion,
       estado: d.estado,
-      id_categoria: d.id_categoria,
+      categoria: d.categoria,
       id_donador: d.id_donador,
-      donador: d.donador,
-      categoria: d.categoria_donacion
+      donador: d.donador
     }));
 
     return res.json(resultado);
@@ -88,8 +85,7 @@ export const obtenerDonacion = async (req, res) => {
     // Adaptar la respuesta al Figma
     const donacion = await Donacion.findByPk(id, {
       include: [
-        { model: Donador, attributes: ["id_donador", "nombre", "tipo_entidad", "direccion", "telefono", "ciudad"] },
-        { model: CategoriaDonacion, attributes: ["id_categoria", "nombre"] },
+        { model: Donador, attributes: ["id_donador", "nombre", "tipo_entidad", "direccion", "telefono"] },
         { model: Postulacion }
       ]
     });
@@ -102,10 +98,9 @@ export const obtenerDonacion = async (req, res) => {
       fecha_vencimiento: donacion.fecha_vencimiento,
       ubicacion: donacion.ubicacion,
       estado: donacion.estado,
-      id_categoria: donacion.id_categoria,
+      categoria: donacion.categoria,
       id_donador: donacion.id_donador,
       donador: donacion.donador,
-      categoria: donacion.categoria_donacion,
       postulaciones: donacion.postulacions
     });
   } catch (error) {
