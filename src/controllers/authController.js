@@ -1,26 +1,44 @@
 // Obtener perfil del usuario autenticado
+// Obtener perfil del usuario autenticado
 export const perfil = async (req, res) => {
   try {
     const { id_usuario, rol } = req.usuario;
-    const usuario = await Usuario.findByPk(id_usuario, { attributes: ['id_usuario', 'username', 'correo', 'rol', 'telefono'] });
-    if (!usuario) return res.status(404).json({ error: 'Usuario no encontrado' });
+    const usuario = await Usuario.findByPk(id_usuario, {
+      attributes: ["id_usuario", "username", "correo", "rol", "telefono"],
+    });
+    if (!usuario)
+      return res.status(404).json({ error: "Usuario no encontrado" });
 
     let perfil = null;
-    if (rol === 'donador') {
-      perfil = await Donador.findOne({ where: { id_usuario }, attributes: { exclude: ['id_usuario'] } });
+    if (rol === "donador") {
+      perfil = await Donador.findOne({
+        where: { id_usuario },
+        attributes: { exclude: ["id_usuario"] },
+      });
     } else {
-      perfil = await Beneficiario.findOne({ where: { id_usuario }, attributes: { exclude: ['id_usuario'] } });
+      perfil = await Beneficiario.findOne({
+        where: { id_usuario },
+        attributes: { exclude: ["id_usuario"] },
+      });
     }
 
+    // ✅ CAMBIO: Devolver perfil DENTRO de usuario
     return res.json({
-      usuario,
-      perfil
+      usuario: {
+        id_usuario: usuario.id_usuario,
+        username: usuario.username,
+        correo: usuario.correo,
+        rol: usuario.rol,
+        telefono: usuario.telefono,
+        perfil: perfil, // ✅ Ahora está dentro, igual que login y registrar
+      },
     });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: error.message });
   }
 };
+
 // src/controllers/authController.js
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
@@ -29,7 +47,8 @@ dotenv.config();
 
 import { Usuario, Donador, Beneficiario } from "../models/index.js";
 
-const signToken = (payload) => jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "8h" });
+const signToken = (payload) =>
+  jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "8h" });
 
 export const registrar = async (req, res) => {
   try {
@@ -45,7 +64,7 @@ export const registrar = async (req, res) => {
       ruc,
       persona_contacto,
       telefono,
-      capacidad_atencion
+      capacidad_atencion,
     } = req.body;
 
     // Validaciones básicas
@@ -60,7 +79,13 @@ export const registrar = async (req, res) => {
     if (existe) return res.status(400).json({ error: "Correo ya registrado" });
 
     const hashed = await bcrypt.hash(password, 10);
-    const usuario = await Usuario.create({ username, correo, password: hashed, telefono, rol });
+    const usuario = await Usuario.create({
+      username,
+      correo,
+      password: hashed,
+      telefono,
+      rol,
+    });
 
     let perfil = null;
     if (rol === "donador") {
@@ -71,7 +96,7 @@ export const registrar = async (req, res) => {
         direccion: direccion || null,
         ruc: ruc || null,
         persona_contacto: persona_contacto || null,
-        telefono: telefono || null
+        telefono: telefono || null,
       });
     } else {
       perfil = await Beneficiario.create({
@@ -79,13 +104,18 @@ export const registrar = async (req, res) => {
         nombre: nombre || username,
         tipo_entidad: tipo_entidad || null,
         direccion: direccion || null,
-        capacidad_atencion: capacidad_atencion ? parseInt(capacidad_atencion, 10) : null,
+        capacidad_atencion: capacidad_atencion
+          ? parseInt(capacidad_atencion, 10)
+          : null,
         persona_contacto: persona_contacto || null,
-        telefono: telefono || null
+        telefono: telefono || null,
       });
     }
 
-    const token = signToken({ id_usuario: usuario.id_usuario, rol: usuario.rol });
+    const token = signToken({
+      id_usuario: usuario.id_usuario,
+      rol: usuario.rol,
+    });
     // Respuesta adaptada al Figma
     return res.status(201).json({
       token,
@@ -94,8 +124,8 @@ export const registrar = async (req, res) => {
         username: usuario.username,
         correo: usuario.correo,
         rol: usuario.rol,
-        perfil
-      }
+        perfil,
+      },
     });
   } catch (error) {
     console.error(error);
@@ -106,19 +136,31 @@ export const registrar = async (req, res) => {
 export const login = async (req, res) => {
   try {
     const { correo, password } = req.body;
-    if (!correo || !password) return res.status(400).json({ error: "Correo y contraseña requeridos" });
+    if (!correo || !password)
+      return res.status(400).json({ error: "Correo y contraseña requeridos" });
 
     const usuario = await Usuario.findOne({ where: { correo } });
-    if (!usuario) return res.status(404).json({ error: "Usuario no encontrado" });
+    if (!usuario)
+      return res.status(404).json({ error: "Usuario no encontrado" });
 
     const valido = await bcrypt.compare(password, usuario.password);
-    if (!valido) return res.status(401).json({ error: "Credenciales incorrectas" });
+    if (!valido)
+      return res.status(401).json({ error: "Credenciales incorrectas" });
 
     let perfil = null;
-    if (usuario.rol === "donador") perfil = await Donador.findOne({ where: { id_usuario: usuario.id_usuario } });
-    else perfil = await Beneficiario.findOne({ where: { id_usuario: usuario.id_usuario } });
+    if (usuario.rol === "donador")
+      perfil = await Donador.findOne({
+        where: { id_usuario: usuario.id_usuario },
+      });
+    else
+      perfil = await Beneficiario.findOne({
+        where: { id_usuario: usuario.id_usuario },
+      });
 
-    const token = signToken({ id_usuario: usuario.id_usuario, rol: usuario.rol });
+    const token = signToken({
+      id_usuario: usuario.id_usuario,
+      rol: usuario.rol,
+    });
     // Respuesta adaptada al Figma
     return res.json({
       token,
@@ -127,8 +169,8 @@ export const login = async (req, res) => {
         username: usuario.username,
         correo: usuario.correo,
         rol: usuario.rol,
-        perfil
-      }
+        perfil,
+      },
     });
   } catch (error) {
     console.error(error);

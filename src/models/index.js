@@ -7,21 +7,28 @@ import { Donacion } from "./Donacion.js";
 import { Postulacion } from "./Postulacion.js";
 
 // Asociaciones (no crean/alteran tablas; solo para consultas)
+
+// Usuario <-> Donador
 Usuario.hasOne(Donador, { foreignKey: "id_usuario" });
 Donador.belongsTo(Usuario, { foreignKey: "id_usuario" });
 
+// Usuario <-> Beneficiario
 Usuario.hasOne(Beneficiario, { foreignKey: "id_usuario" });
 Beneficiario.belongsTo(Usuario, { foreignKey: "id_usuario" });
 
+// Donador <-> Donacion
 Donador.hasMany(Donacion, { foreignKey: "id_donador" });
 Donacion.belongsTo(Donador, { foreignKey: "id_donador" });
 
-CategoriaDonacion.hasMany(Donacion, { foreignKey: "id_categoria" });
-Donacion.belongsTo(CategoriaDonacion, { foreignKey: "id_categoria" });
+// ❌ ESTAS LÍNEAS ERAN EL ERROR. BORRALAS O COMÉNTALAS:
+// CategoriaDonacion.hasMany(Donacion, { foreignKey: "id_categoria" });
+// Donacion.belongsTo(CategoriaDonacion, { foreignKey: "id_categoria" });
 
+// Donacion <-> Postulacion
 Donacion.hasMany(Postulacion, { foreignKey: "id_donacion" });
 Postulacion.belongsTo(Donacion, { foreignKey: "id_donacion" });
 
+// Beneficiario <-> Postulacion
 Beneficiario.hasMany(Postulacion, { foreignKey: "id_beneficiario" });
 Postulacion.belongsTo(Beneficiario, { foreignKey: "id_beneficiario" });
 

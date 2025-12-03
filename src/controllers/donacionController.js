@@ -1,16 +1,32 @@
 // src/controllers/donacionController.js
-import { Donacion, Donador, CategoriaDonacion, Postulacion } from "../models/index.js";
+import {
+  Donacion,
+  Donador,
+  CategoriaDonacion,
+  Postulacion,
+} from "../models/index.js";
 import { Op } from "sequelize";
 
 export const crearDonacion = async (req, res) => {
   try {
     const { id_usuario } = req.usuario;
     const donador = await Donador.findOne({ where: { id_usuario } });
-    if (!donador) return res.status(403).json({ mensaje: "Solo donadores pueden crear donaciones" });
+    if (!donador)
+      return res
+        .status(403)
+        .json({ mensaje: "Solo donadores pueden crear donaciones" });
 
     // Adaptar los campos y respuesta al Figma
-    const { nombre, descripcion, cantidad, fecha_vencimiento, ubicacion, categoria } = req.body;
-    if (!nombre || !cantidad || !categoria) return res.status(400).json({ error: "Faltan datos obligatorios" });
+    const {
+      nombre,
+      descripcion,
+      cantidad,
+      fecha_vencimiento,
+      ubicacion,
+      categoria,
+    } = req.body;
+    if (!nombre || !cantidad || !categoria)
+      return res.status(400).json({ error: "Faltan datos obligatorios" });
 
     const nueva = await Donacion.create({
       id_donador: donador.id_donador,
@@ -20,7 +36,7 @@ export const crearDonacion = async (req, res) => {
       cantidad,
       fecha_vencimiento: fecha_vencimiento || null,
       ubicacion: ubicacion || null,
-      estado: "disponible"
+      estado: "disponible",
     });
 
     // Respuesta adaptada al Figma
@@ -33,7 +49,7 @@ export const crearDonacion = async (req, res) => {
       ubicacion: nueva.ubicacion,
       estado: nueva.estado,
       categoria: nueva.categoria,
-      id_donador: nueva.id_donador
+      id_donador: nueva.id_donador,
     });
   } catch (error) {
     console.error(error);
@@ -53,13 +69,22 @@ export const listarDonaciones = async (req, res) => {
     const donaciones = await Donacion.findAll({
       where,
       include: [
-        { model: Donador, attributes: ["id_donador", "nombre", "tipo_entidad", "direccion", "telefono"] }
+        {
+          model: Donador,
+          attributes: [
+            "id_donador",
+            "nombre",
+            "tipo_entidad",
+            "direccion",
+            "telefono",
+          ],
+        },
       ],
       order: [["id_donacion", "DESC"]],
     });
 
     // Mapear la respuesta para que coincida con el Figma
-    const resultado = donaciones.map(d => ({
+    const resultado = donaciones.map((d) => ({
       id_donacion: d.id_donacion,
       nombre: d.nombre,
       descripcion: d.descripcion,
@@ -69,7 +94,7 @@ export const listarDonaciones = async (req, res) => {
       estado: d.estado,
       categoria: d.categoria,
       id_donador: d.id_donador,
-      donador: d.donador
+      donador: d.donador,
     }));
 
     return res.json(resultado);
@@ -85,11 +110,21 @@ export const obtenerDonacion = async (req, res) => {
     // Adaptar la respuesta al Figma
     const donacion = await Donacion.findByPk(id, {
       include: [
-        { model: Donador, attributes: ["id_donador", "nombre", "tipo_entidad", "direccion", "telefono"] },
-        { model: Postulacion }
-      ]
+        {
+          model: Donador,
+          attributes: [
+            "id_donador",
+            "nombre",
+            "tipo_entidad",
+            "direccion",
+            "telefono",
+          ],
+        },
+        { model: Postulacion },
+      ],
     });
-    if (!donacion) return res.status(404).json({ error: "Donación no encontrada" });
+    if (!donacion)
+      return res.status(404).json({ error: "Donación no encontrada" });
     return res.json({
       id_donacion: donacion.id_donacion,
       nombre: donacion.nombre,
@@ -101,7 +136,7 @@ export const obtenerDonacion = async (req, res) => {
       categoria: donacion.categoria,
       id_donador: donacion.id_donador,
       donador: donacion.donador,
-      postulaciones: donacion.postulacions
+      postulaciones: donacion.postulacions,
     });
   } catch (error) {
     console.error(error);
@@ -114,10 +149,12 @@ export const editarDonacion = async (req, res) => {
     const { id } = req.params;
     const { id_usuario } = req.usuario;
     const donacion = await Donacion.findByPk(id);
-    if (!donacion) return res.status(404).json({ mensaje: "Donación no encontrada" });
+    if (!donacion)
+      return res.status(404).json({ mensaje: "Donación no encontrada" });
 
     const donador = await Donador.findOne({ where: { id_usuario } });
-    if (!donador || donacion.id_donador !== donador.id_donador) return res.status(403).json({ mensaje: "No autorizado" });
+    if (!donador || donacion.id_donador !== donador.id_donador)
+      return res.status(403).json({ mensaje: "No autorizado" });
 
     await donacion.update(req.body);
     return res.json(donacion);
@@ -132,15 +169,71 @@ export const eliminarDonacion = async (req, res) => {
     const { id } = req.params;
     const { id_usuario } = req.usuario;
     const donacion = await Donacion.findByPk(id);
-    if (!donacion) return res.status(404).json({ mensaje: "Donación no encontrada" });
+    if (!donacion)
+      return res.status(404).json({ mensaje: "Donación no encontrada" });
 
     const donador = await Donador.findOne({ where: { id_usuario } });
-    if (!donador || donacion.id_donador !== donador.id_donador) return res.status(403).json({ mensaje: "No autorizado" });
+    if (!donador || donacion.id_donador !== donador.id_donador)
+      return res.status(403).json({ mensaje: "No autorizado" });
 
     await donacion.destroy();
     return res.json({ mensaje: "Donación eliminada" });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: error.message });
+  }
+};
+
+// Añade esta nueva función en tu archivo: donacionController.js
+
+// src/controllers/donacionController.js
+
+export const obtenerMisDonaciones = async (req, res) => {
+  try {
+    const { id_usuario } = req.usuario;
+    const donador = await Donador.findOne({ where: { id_usuario } });
+
+    if (!donador) {
+      return res.status(200).json([]);
+    } // 3. Buscar SOLO las donaciones de este donador e INCLUIR el modelo Donador
+
+    const donaciones = await Donacion.findAll({
+      where: { id_donador: donador.id_donador },
+      // Añadir include: Donador para obtener sus datos
+      include: [
+        {
+          model: Donador,
+          attributes: [
+            "id_donador",
+            "nombre",
+            "tipo_entidad",
+            "direccion",
+            "telefono",
+          ],
+        },
+      ],
+      order: [["id_donacion", "DESC"]],
+    }); // Mapear la respuesta para que coincida con el Figma
+
+    const resultado = donaciones.map((d) => ({
+      id_donacion: d.id_donacion,
+      nombre: d.nombre,
+      descripcion: d.descripcion,
+      cantidad: d.cantidad,
+      fecha_vencimiento: d.fecha_vencimiento,
+      ubicacion: d.ubicacion,
+      estado: d.estado,
+      categoria: d.categoria,
+      id_donador: d.id_donador,
+      // Añadir la información del donador
+      donador: d.donador,
+    }));
+
+    return res.json(resultado);
+  } catch (error) {
+    console.error(error);
+    return res
+      .status(500)
+      .json({ error: "Error al obtener mis donaciones: " + error.message });
   }
 };
